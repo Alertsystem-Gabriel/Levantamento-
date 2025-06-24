@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapeamento de Quadros</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #2c3e50;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .quadro {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-left: 6px solid #3498db;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    label {
+      flex: 1;
+      min-width: 150px;
+      font-weight: 500;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 5px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 5px 20px 0;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .porta {
+      display: flex;
+      gap: 10px;
+      margin: 5px 0;
+      flex-wrap: wrap;
+    }
+    .porta input {
+      flex: 1;
+    }
+    textarea {
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mapeamento de Quadros</h1>
+  <div class="row">
+    <label>Nome do Cliente:
+      <input type="text" id="nomeCliente" placeholder="Digite o nome do cliente">
+    </label>
+  </div>
+  <button onclick="adicionarQuadro()">Adicionar Quadro</button>
+  <button onclick="gerarPDF()">Gerar PDF</button>
+
+  <div id="quadros"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    let contadorQuadros = 0;
+
+    function adicionarQuadro() {
+      contadorQuadros++;
+      const quadroDiv = document.createElement('div');
+      quadroDiv.className = 'quadro';
+      quadroDiv.innerHTML = `
+        <h3>Quadro ${contadorQuadros}</h3>
+        <div class="row">
+          <label>Número do Quadro:
+            <input type="text" class="numeroQuadro" placeholder="Número">
+          </label>
+          <label>Nome do Quadro:
+            <input type="text" class="nomeQuadro" placeholder="Nome">
+          </label>
+        </div>
+        <label><input type="checkbox" class="detalhesSwitch"> Incluir Marca, Modelo e Nº de Portas</label>
+        <div class="detalhes hidden">
+          <div class="row">
+            <label>Marca:
+              <input type="text" class="marca" placeholder="Marca">
+            </label>
+            <label>Modelo:
+              <input type="text" class="modelo" placeholder="Modelo">
+            </label>
+            <label>Nº de Portas:
+              <input type="number" class="numPortas" min="1">
+            </label>
+          </div>
+          <div class="portas"></div>
+        </div>
+        <div class="row">
+          <label>Tipo de Energia:
+            <select class="energia">
+              <option value="">Selecione</option>
+              <option value="nobreak">Nobreak</option>
+              <option value="fonte">Fonte</option>
+              <option value="ligacao direta">Ligação Direta</option>
+            </select>
+          </label>
+        </div>
+        <div class="energiaDetalhes hidden">
+          <div class="row">
+            <label>Marca:
+              <input type="text" class="marcaEnergia" placeholder="Marca">
+            </label>
+            <label>Modelo:
+              <input type="text" class="modeloEnergia" placeholder="Modelo">
+            </label>
+            <label>VA:
+              <input type="number" class="vaEnergia" placeholder="VA">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <label>Tipo de Conexão:
+            <select class="conexao">
+              <option value="">Selecione</option>
+              <option value="fibra">Fibra</option>
+              <option value="cabo">Cabo de Rede</option>
+              <option value="antena">Antena</option>
+              <option value="sem">Sem Conexão</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+        </div>
+        <div class="conexaoDetalhes hidden"></div>
+        <div class="row">
+          <label>Observações:</label>
+          <textarea class="observacoes" rows="3" placeholder="Digite aqui observações gerais sobre o quadro..."></textarea>
+        </div>
+      `;
+
+      document.getElementById('quadros').appendChild(quadroDiv);
+
+      quadroDiv.querySelector('.detalhesSwitch').addEventListener('change', function() {
+        quadroDiv.querySelector('.detalhes').classList.toggle('hidden', !this.checked);
+      });
+
+      quadroDiv.querySelector('.numPortas').addEventListener('change', function() {
+        const portasDiv = quadroDiv.querySelector('.portas');
+        portasDiv.innerHTML = '';
+        const num = parseInt(this.value);
+        for (let i = 1; i <= num; i++) {
+          portasDiv.innerHTML += `
+            <div class="porta">
+              <label>Porta ${i}</label>
+              <input type="text" placeholder="IP">
+              <input type="text" placeholder="Equipamento">
+              <input type="text" placeholder="Nome do Equipamento">
+            </div>
+          `;
+        }
+      });
+
+      quadroDiv.querySelector('.energia').addEventListener('change', function() {
+        quadroDiv.querySelector('.energiaDetalhes').classList.toggle('hidden', this.value !== 'nobreak');
+      });
+
+      quadroDiv.querySelector('.conexao').addEventListener('change', function() {
+        const detalhes = quadroDiv.querySelector('.conexaoDetalhes');
+        detalhes.innerHTML = '';
+
+        if (!this.value || this.value === 'sem') {
+          detalhes.classList.add('hidden');
+          return;
+        }
+
+        detalhes.classList.remove('hidden');
+        let html = '';
+        if (this.value === 'fibra') {
+          html = `<label>Tipo de Fibra:
+                    <select>
+                      <option value="monomodo">Monomodo</option>
+                      <option value="multimodo">Multimodo</option>
+                    </select>
+                  </label>`;
+        } else if (this.value === 'cabo') {
+          html = `<label>Tipo de Cabo:
+                    <select>
+                      <option value="UTP">UTP</option>
+                      <option value="FTP">FTP</option>
+                    </select>
+                  </label>`;
+        } else if (this.value === 'antena') {
+          html = `<label>IP da Antena:
+                    <input type="text" placeholder="IP da Antena">
+                  </label>`;
+        } else if (this.value === 'outro') {
+          html = `<label>Descrição:
+                    <input type="text" placeholder="Descreva o tipo de conexão">
+                  </label>`;
+        }
+        detalhes.innerHTML = html;
+      });
+    }
+
+    async function gerarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y = 10;
+
+      const nomeCliente = document.getElementById('nomeCliente').value;
+      doc.setFontSize(20);
+      doc.setTextColor(30, 30, 30);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Cliente: ${nomeCliente}`, 10, y);
+      y += 15;
+
+      const quadros = document.querySelectorAll('.quadro');
+      quadros.forEach((q, index) => {
+        if (y > 270) { doc.addPage(); y = 10; }
+        doc.setFillColor(52, 152, 219);
+        doc.rect(10, y - 5, 190, 8, 'F');
+        doc.setTextColor(255);
+        doc.setFontSize(12);
+        doc.text(`Quadro ${index + 1}`, 12, y);
+        y += 10;
+
+        doc.setTextColor(0);
+        const get = sel => q.querySelector(sel)?.value || '';
+
+        doc.setFont(undefined, 'bold');
+        doc.text(`Número do Quadro:`, 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(get('.numeroQuadro'), 60, y); y += 8;
+
+        doc.setFont(undefined, 'bold');
+        doc.text(`Nome do Quadro:`, 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(get('.nomeQuadro'), 60, y); y += 8;
+
+        if (!q.querySelector('.detalhes').classList.contains('hidden')) {
+          doc.text(`Marca: ${get('.marca')}`, 10, y); y += 8;
+          doc.text(`Modelo: ${get('.modelo')}`, 10, y); y += 8;
+          const numPortas = parseInt(get('.numPortas'));
+          doc.text(`Número de Portas: ${numPortas}`, 10, y); y += 8;
+          const portas = q.querySelectorAll('.portas .porta');
+          portas.forEach((p, i) => {
+            const inputs = p.querySelectorAll('input');
+            const textoPorta = `Porta ${i + 1}: IP: ${inputs[0].value}, Equipamento: ${inputs[1].value}, Nome: ${inputs[2].value}`;
+            if (y > 280) { doc.addPage(); y = 10; }
+            doc.text(textoPorta, 10, y); y += 8;
+          });
+        }
+
+        doc.text(`Tipo de Energia: ${get('.energia')}`, 10, y); y += 8;
+        if (get('.energia') === 'nobreak') {
+          doc.text(`Marca Energia: ${get('.marcaEnergia')}`, 10, y); y += 8;
+          doc.text(`Modelo Energia: ${get('.modeloEnergia')}`, 10, y); y += 8;
+          doc.text(`VA: ${get('.vaEnergia')}`, 10, y); y += 8;
+        }
+
+        doc.text(`Tipo de Conexão: ${get('.conexao')}`, 10, y); y += 8;
+        const detalhe = q.querySelector('.conexaoDetalhes');
+        if (!detalhe.classList.contains('hidden')) {
+          const input = detalhe.querySelector('input');
+          const select = detalhe.querySelector('select');
+          if (input) {
+            doc.text(`Detalhe da Conexão: ${input.value}`, 10, y); y += 8;
+          } else if (select) {
+            doc.text(`Detalhe da Conexão: ${select.value}`, 10, y); y += 8;
+          }
+        }
+
+        const observacoes = q.querySelector('.observacoes')?.value.trim();
+        if (observacoes) {
+          if (y > 270) { doc.addPage(); y = 10; }
+          doc.text(`Observações: ${observacoes}`, 10, y);
+          y += 10;
+        }
+
+        y += 5;
+        if (y > 270) { doc.addPage(); y = 10; }
+      });
+
+      doc.save('mapeamento_quadros.pdf');
+    }
+  </script>
+</body>
+</html>
