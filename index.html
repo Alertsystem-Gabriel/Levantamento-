@@ -1,309 +1,1115 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Mapeamento de Quadros</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Relatório Técnico A4</title>
+
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+/* ========================================= */
+/* RESET */
+/* ========================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+
+    background:#e9ecef;
+
+    padding:30px;
+
+}
+
+/* ========================================= */
+/* FORMULÁRIO */
+/* ========================================= */
+
+.container{
+
+    max-width:1200px;
+
+    margin:auto;
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:40px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,0.1);
+
+}
+
+h1{
+
+    text-align:center;
+
+    margin-bottom:40px;
+
+    color:#222;
+
+    font-size:42px;
+
+}
+
+/* ========================================= */
+/* GRID */
+/* ========================================= */
+
+.grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+}
+
+.campo{
+
+    margin-bottom:25px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:10px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:#333;
+
+}
+
+input[type="text"],
+input[type="date"],
+textarea{
+
+    width:100%;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    border:2px solid #ccc;
+
+    font-size:16px;
+
+    transition:0.3s;
+
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+textarea:focus{
+
+    border-color:#198754;
+
+    outline:none;
+
+}
+
+textarea{
+
+    resize:vertical;
+
+    min-height:140px;
+
+}
+
+/* ========================================= */
+/* IMAGENS */
+/* ========================================= */
+
+.upload-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+
+    margin-top:20px;
+
+}
+
+.upload-box{
+
+    background:#f8f9fa;
+
+    border:2px dashed #ced4da;
+
+    padding:15px;
+
+    border-radius:15px;
+
+}
+
+.preview{
+
+    width:100%;
+
+    height:250px;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    border:2px solid #dee2e6;
+
+    margin-top:15px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#fff;
+
+}
+
+.preview img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+}
+
+/* ========================================= */
+/* LOGO */
+/* ========================================= */
+
+.logo-area{
+
+    margin-top:40px;
+
+    width:250px;
+
+}
+
+.logo-preview{
+
+    width:160px;
+
+    height:160px;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    border:2px solid #ccc;
+
+    background:#fff;
+
+    margin-top:15px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+.logo-preview img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:contain;
+
+}
+
+/* ========================================= */
+/* BOTÃO */
+/* ========================================= */
+
+button{
+
+    width:100%;
+
+    margin-top:40px;
+
+    padding:20px;
+
+    border:none;
+
+    border-radius:15px;
+
+    background:#198754;
+
+    color:#fff;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+}
+
+button:hover{
+
+    background:#146c43;
+
+}
+
+/* ========================================= */
+/* PDF A4 */
+/* ========================================= */
+
+#pdf{
+
+    position:absolute;
+
+    left:-99999px;
+
+    top:0;
+
+    width:210mm;
+
+    background:#fff;
+
+}
+
+/* ========================================= */
+/* PÁGINAS */
+/* ========================================= */
+
+.page{
+
+    width:210mm;
+
+    min-height:297mm;
+
+    background:#fff;
+
+    padding:20mm;
+
+    position:relative;
+
+    overflow:hidden;
+
+    page-break-after:always;
+
+}
+
+/* ========================================= */
+/* HEADER */
+/* ========================================= */
+
+.header{
+
+    width:100%;
+
+    border-bottom:3px solid #198754;
+
+    padding-bottom:10mm;
+
+    margin-bottom:12mm;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.header-left h2{
+
+    font-size:28px;
+
+    color:#111;
+
+    margin-bottom:3mm;
+
+}
+
+.header-left p{
+
+    font-size:12px;
+
+    color:#666;
+
+}
+
+/* ========================================= */
+/* LOGO PDF */
+/* ========================================= */
+
+.logo-pdf{
+
+    width:28mm;
+
+    height:28mm;
+
+    object-fit:contain;
+
+}
+
+/* ========================================= */
+/* INFO BOX */
+/* ========================================= */
+
+.info-box{
+
+    background:#f8f9fa;
+
+    border-left:4mm solid #198754;
+
+    border-radius:5mm;
+
+    padding:8mm;
+
+    margin-bottom:10mm;
+
+}
+
+.info-line{
+
+    font-size:15px;
+
+    margin-bottom:4mm;
+
+    color:#222;
+
+}
+
+/* ========================================= */
+/* TÍTULOS */
+/* ========================================= */
+
+.section-title{
+
+    font-size:20px;
+
+    color:#111;
+
+    margin-bottom:5mm;
+
+    margin-top:8mm;
+
+}
+
+/* ========================================= */
+/* TEXT BOX */
+/* ========================================= */
+
+.text-box{
+
+    background:#f8f9fa;
+
+    border:1px solid #dcdcdc;
+
+    border-radius:5mm;
+
+    padding:8mm;
+
+    font-size:14px;
+
+    line-height:1.8;
+
+    color:#333;
+
+    white-space:pre-wrap;
+
+}
+
+/* ========================================= */
+/* FOTO */
+/* ========================================= */
+
+.photo-title{
+
+    font-size:20px;
+
+    color:#222;
+
+    margin-bottom:8mm;
+
+    border-left:4mm solid #198754;
+
+    padding-left:4mm;
+
+}
+
+.photo{
+
+    width:100%;
+
+    height:160mm;
+
+    object-fit:cover;
+
+    border-radius:5mm;
+
+    border:1px solid #ccc;
+
+    box-shadow:0 2mm 4mm rgba(0,0,0,0.1);
+
+}
+
+/* ========================================= */
+/* FOOTER */
+/* ========================================= */
+
+.footer{
+
+    position:absolute;
+
+    bottom:8mm;
+
+    left:20mm;
+
+    right:20mm;
+
+    border-top:1px solid #ccc;
+
+    padding-top:3mm;
+
+    text-align:center;
+
+    font-size:11px;
+
+    color:#666;
+
+}
+
+/* ========================================= */
+/* RESPONSIVIDADE */
+/* ========================================= */
+
+/* TABLETS */
+
+@media(max-width:1024px){
+
+    body{
+
+        padding:20px;
+
     }
-    h1 {
-      color: #2c3e50;
-      font-size: 32px;
-      font-weight: bold;
+
+    .container{
+
+        padding:25px;
+
     }
-    .quadro {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-left: 6px solid #3498db;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+    h1{
+
+        font-size:34px;
+
     }
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 15px;
+
+    .grid{
+
+        grid-template-columns:1fr;
+
     }
-    label {
-      flex: 1;
-      min-width: 150px;
-      font-weight: 500;
+
+    .upload-grid{
+
+        grid-template-columns:1fr;
+
     }
-    input, select, textarea {
-      width: 100%;
-      padding: 5px 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
+
+}
+
+/* CELULAR */
+
+@media(max-width:768px){
+
+    body{
+
+        padding:10px;
+
     }
-    .hidden {
-      display: none;
+
+    .container{
+
+        padding:18px;
+
+        border-radius:15px;
+
     }
-    button {
-      background-color: #3498db;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 10px 5px 20px 0;
-      font-size: 16px;
+
+    h1{
+
+        font-size:28px;
+
+        margin-bottom:30px;
+
     }
-    button:hover {
-      background-color: #2980b9;
+
+    label{
+
+        font-size:16px;
+
     }
-    .porta {
-      display: flex;
-      gap: 10px;
-      margin: 5px 0;
-      flex-wrap: wrap;
+
+    input[type="text"],
+    input[type="date"],
+    textarea{
+
+        padding:14px;
+
+        font-size:15px;
+
     }
-    .porta input {
-      flex: 1;
+
+    textarea{
+
+        min-height:120px;
+
     }
-    textarea {
-      resize: vertical;
+
+    .preview{
+
+        height:220px;
+
     }
-  </style>
+
+    .upload-box{
+
+        padding:12px;
+
+    }
+
+    .logo-area{
+
+        width:100%;
+
+    }
+
+    .logo-preview{
+
+        width:130px;
+
+        height:130px;
+
+    }
+
+    button{
+
+        padding:18px;
+
+        font-size:18px;
+
+        border-radius:12px;
+
+    }
+
+}
+
+/* CELULAR PEQUENO */
+
+@media(max-width:480px){
+
+    body{
+
+        padding:5px;
+
+    }
+
+    .container{
+
+        padding:15px;
+
+    }
+
+    h1{
+
+        font-size:24px;
+
+    }
+
+    .preview{
+
+        height:180px;
+
+    }
+
+    .logo-preview{
+
+        width:110px;
+
+        height:110px;
+
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea{
+
+        font-size:14px;
+
+    }
+
+    button{
+
+        font-size:16px;
+
+        padding:16px;
+
+    }
+
+}
+
+</style>
+
 </head>
+
 <body>
-  <h1>Mapeamento de Quadros</h1>
-  <div class="row">
-    <label>Nome do Cliente:
-      <input type="text" id="nomeCliente" placeholder="Digite o nome do cliente">
-    </label>
-  </div>
-  <button onclick="adicionarQuadro()">Adicionar Quadro</button>
-  <button onclick="gerarPDF()">Gerar PDF</button>
 
-  <div id="quadros"></div>
+<div class="container">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    let contadorQuadros = 0;
+    <h1>Relatório Técnico</h1>
 
-    function adicionarQuadro() {
-      contadorQuadros++;
-      const quadroDiv = document.createElement('div');
-      quadroDiv.className = 'quadro';
-      quadroDiv.innerHTML = `
-        <h3>Quadro ${contadorQuadros}</h3>
-        <div class="row">
-          <label>Número do Quadro:
-            <input type="text" class="numeroQuadro" placeholder="Número">
-          </label>
-          <label>Nome do Quadro:
-            <input type="text" class="nomeQuadro" placeholder="Nome">
-          </label>
-        </div>
-        <label><input type="checkbox" class="detalhesSwitch"> Incluir Marca, Modelo e Nº de Portas</label>
-        <div class="detalhes hidden">
-          <div class="row">
-            <label>Marca:
-              <input type="text" class="marca" placeholder="Marca">
-            </label>
-            <label>Modelo:
-              <input type="text" class="modelo" placeholder="Modelo">
-            </label>
-            <label>Nº de Portas:
-              <input type="number" class="numPortas" min="1">
-            </label>
-          </div>
-          <div class="portas"></div>
-        </div>
-        <div class="row">
-          <label>Tipo de Energia:
-            <select class="energia">
-              <option value="">Selecione</option>
-              <option value="nobreak">Nobreak</option>
-              <option value="fonte">Fonte</option>
-              <option value="ligacao direta">Ligação Direta</option>
-            </select>
-          </label>
-        </div>
-        <div class="energiaDetalhes hidden">
-          <div class="row">
-            <label>Marca:
-              <input type="text" class="marcaEnergia" placeholder="Marca">
-            </label>
-            <label>Modelo:
-              <input type="text" class="modeloEnergia" placeholder="Modelo">
-            </label>
-            <label>VA:
-              <input type="number" class="vaEnergia" placeholder="VA">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <label>Tipo de Conexão:
-            <select class="conexao">
-              <option value="">Selecione</option>
-              <option value="fibra">Fibra</option>
-              <option value="cabo">Cabo de Rede</option>
-              <option value="antena">Antena</option>
-              <option value="sem">Sem Conexão</option>
-              <option value="outro">Outro</option>
-            </select>
-          </label>
-        </div>
-        <div class="conexaoDetalhes hidden"></div>
-        <div class="row">
-          <label>Observações:</label>
-          <textarea class="observacoes" rows="3" placeholder="Digite aqui observações gerais sobre o quadro..."></textarea>
-        </div>
-      `;
+    <div class="grid">
 
-      document.getElementById('quadros').appendChild(quadroDiv);
+        <div class="campo">
 
-      quadroDiv.querySelector('.detalhesSwitch').addEventListener('change', function() {
-        quadroDiv.querySelector('.detalhes').classList.toggle('hidden', !this.checked);
-      });
+            <label>Cliente</label>
 
-      quadroDiv.querySelector('.numPortas').addEventListener('change', function() {
-        const portasDiv = quadroDiv.querySelector('.portas');
-        portasDiv.innerHTML = '';
-        const num = parseInt(this.value);
-        for (let i = 1; i <= num; i++) {
-          portasDiv.innerHTML += `
-            <div class="porta">
-              <label>Porta ${i}</label>
-              <input type="text" placeholder="IP">
-              <input type="text" placeholder="Equipamento">
-              <input type="text" placeholder="Nome do Equipamento">
+            <input type="text" id="cliente">
+
+        </div>
+
+        <div class="campo">
+
+            <label>Unidade</label>
+
+            <input type="text" id="unidade">
+
+        </div>
+
+        <div class="campo">
+
+            <label>Técnico</label>
+
+            <input type="text" id="tecnico">
+
+        </div>
+
+        <div class="campo">
+
+            <label>Data</label>
+
+            <input type="date" id="data">
+
+        </div>
+
+    </div>
+
+    <div class="campo">
+
+        <label>Objetivo</label>
+
+        <textarea id="objetivo"></textarea>
+
+    </div>
+
+    <div class="campo">
+
+        <label>Detalhes</label>
+
+        <textarea id="detalhes"></textarea>
+
+    </div>
+
+    <!-- IMAGENS -->
+
+    <div class="upload-grid">
+
+        <div class="upload-box">
+
+            <label>Foto Sistema 1</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img1')">
+
+            <div class="preview" id="img1"></div>
+
+        </div>
+
+        <div class="upload-box">
+
+            <label>Foto Sistema 2</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img2')">
+
+            <div class="preview" id="img2"></div>
+
+        </div>
+
+        <div class="upload-box">
+
+            <label>Foto Equipamento 1</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img3')">
+
+            <div class="preview" id="img3"></div>
+
+        </div>
+
+        <div class="upload-box">
+
+            <label>Foto Equipamento 2</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img4')">
+
+            <div class="preview" id="img4"></div>
+
+        </div>
+
+        <div class="upload-box">
+
+            <label>Foto Adicional 1</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img5')">
+
+            <div class="preview" id="img5"></div>
+
+        </div>
+
+        <div class="upload-box">
+
+            <label>Foto Adicional 2</label>
+
+            <input type="file"
+            accept="image/*"
+            onchange="preview(event,'img6')">
+
+            <div class="preview" id="img6"></div>
+
+        </div>
+
+    </div>
+
+    <!-- LOGO -->
+
+    <div class="logo-area">
+
+        <label>Logo da Empresa</label>
+
+        <input type="file"
+        accept="image/*"
+        onchange="preview(event,'logo')">
+
+        <div class="logo-preview" id="logo"></div>
+
+    </div>
+
+    <button onclick="gerarPDF()">
+        GERAR PDF A4
+    </button>
+
+</div>
+
+<!-- PDF -->
+
+<div id="pdf"></div>
+
+<script>
+
+/* ========================================= */
+/* PREVIEW IMAGENS */
+/* ========================================= */
+
+function preview(event, id){
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        document.getElementById(id).innerHTML =
+        `<img src="${e.target.result}">`;
+
+    }
+
+    reader.readAsDataURL(file);
+
+}
+
+/* ========================================= */
+/* PEGAR IMAGEM */
+/* ========================================= */
+
+function pegarImagem(id){
+
+    const img = document.querySelector(`#${id} img`);
+
+    return img ? img.src : '';
+
+}
+
+/* ========================================= */
+/* GERAR PDF */
+/* ========================================= */
+
+async function gerarPDF(){
+
+    const { jsPDF } = window.jspdf;
+
+    const cliente  = document.getElementById('cliente').value;
+    const unidade  = document.getElementById('unidade').value;
+    const tecnico  = document.getElementById('tecnico').value;
+    const data     = document.getElementById('data').value;
+    const objetivo = document.getElementById('objetivo').value;
+    const detalhes = document.getElementById('detalhes').value;
+
+    const logo = pegarImagem('logo');
+
+    const imagens = [
+
+        {
+            titulo:'Foto Sistema 1',
+            imagem:pegarImagem('img1')
+        },
+
+        {
+            titulo:'Foto Sistema 2',
+            imagem:pegarImagem('img2')
+        },
+
+        {
+            titulo:'Foto Equipamento 1',
+            imagem:pegarImagem('img3')
+        },
+
+        {
+            titulo:'Foto Equipamento 2',
+            imagem:pegarImagem('img4')
+        },
+
+        {
+            titulo:'Foto Adicional 1',
+            imagem:pegarImagem('img5')
+        },
+
+        {
+            titulo:'Foto Adicional 2',
+            imagem:pegarImagem('img6')
+        }
+
+    ];
+
+    /* ========================================= */
+    /* HTML PDF */
+    /* ========================================= */
+
+    let html = `
+
+    <div class="page">
+
+        <div class="header">
+
+            <div class="header-left">
+
+                <h2>Relatório Técnico</h2>
+
+                <p>Documento técnico de instalação</p>
+
             </div>
-          `;
+
+            ${logo ? `<img src="${logo}" class="logo-pdf">` : ''}
+
+        </div>
+
+        <div class="info-box">
+
+            <div class="info-line">
+                <strong>Cliente:</strong> ${cliente}
+            </div>
+
+            <div class="info-line">
+                <strong>Unidade:</strong> ${unidade}
+            </div>
+
+            <div class="info-line">
+                <strong>Técnico:</strong> ${tecnico}
+            </div>
+
+            <div class="info-line">
+                <strong>Data:</strong> ${data}
+            </div>
+
+        </div>
+
+        <div class="section-title">
+            Objetivo
+        </div>
+
+        <div class="text-box">
+            ${objetivo}
+        </div>
+
+        <div class="section-title">
+            Detalhes
+        </div>
+
+        <div class="text-box">
+            ${detalhes}
+        </div>
+
+        <div class="footer">
+            Relatório técnico gerado automaticamente
+        </div>
+
+    </div>
+
+    `;
+
+    /* ========================================= */
+    /* PÁGINAS IMAGENS */
+    /* ========================================= */
+
+    imagens.forEach(item => {
+
+        if(item.imagem){
+
+            html += `
+
+            <div class="page">
+
+                <div class="header">
+
+                    <div class="header-left">
+
+                        <h2>Relatório Fotográfico</h2>
+
+                        <p>${item.titulo}</p>
+
+                    </div>
+
+                    ${logo ? `<img src="${logo}" class="logo-pdf">` : ''}
+
+                </div>
+
+                <div class="photo-title">
+                    ${item.titulo}
+                </div>
+
+                <img src="${item.imagem}" class="photo">
+
+                <div class="footer">
+                    Relatório fotográfico técnico
+                </div>
+
+            </div>
+
+            `;
+
         }
-      });
 
-      quadroDiv.querySelector('.energia').addEventListener('change', function() {
-        quadroDiv.querySelector('.energiaDetalhes').classList.toggle('hidden', this.value !== 'nobreak');
-      });
+    });
 
-      quadroDiv.querySelector('.conexao').addEventListener('change', function() {
-        const detalhes = quadroDiv.querySelector('.conexaoDetalhes');
-        detalhes.innerHTML = '';
+    document.getElementById('pdf').innerHTML = html;
 
-        if (!this.value || this.value === 'sem') {
-          detalhes.classList.add('hidden');
-          return;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const pages = document.querySelectorAll('.page');
+
+    const pdf = new jsPDF({
+
+        orientation:'portrait',
+        unit:'mm',
+        format:'a4'
+
+    });
+
+    for(let i = 0; i < pages.length; i++){
+
+        const canvas = await html2canvas(pages[i], {
+
+            scale:3,
+            useCORS:true,
+            backgroundColor:"#ffffff"
+
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg',1);
+
+        if(i > 0){
+
+            pdf.addPage();
+
         }
 
-        detalhes.classList.remove('hidden');
-        let html = '';
-        if (this.value === 'fibra') {
-          html = `<label>Tipo de Fibra:
-                    <select>
-                      <option value="monomodo">Monomodo</option>
-                      <option value="multimodo">Multimodo</option>
-                    </select>
-                  </label>`;
-        } else if (this.value === 'cabo') {
-          html = `<label>Tipo de Cabo:
-                    <select>
-                      <option value="UTP">UTP</option>
-                      <option value="FTP">FTP</option>
-                    </select>
-                  </label>`;
-        } else if (this.value === 'antena') {
-          html = `<label>IP da Antena:
-                    <input type="text" placeholder="IP da Antena">
-                  </label>`;
-        } else if (this.value === 'outro') {
-          html = `<label>Descrição:
-                    <input type="text" placeholder="Descreva o tipo de conexão">
-                  </label>`;
-        }
-        detalhes.innerHTML = html;
-      });
+        pdf.addImage(
+
+            imgData,
+            'JPEG',
+            0,
+            0,
+            210,
+            297
+
+        );
+
     }
 
-    async function gerarPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      let y = 10;
+    /* ========================================= */
+    /* NOME PDF */
+    /* ========================================= */
 
-      const nomeCliente = document.getElementById('nomeCliente').value;
-      doc.setFontSize(20);
-      doc.setTextColor(30, 30, 30);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Cliente: ${nomeCliente}`, 10, y);
-      y += 15;
+    const dataFormatada = data
+    ? data.split('-').reverse().join('-')
+    : 'sem-data';
 
-      const quadros = document.querySelectorAll('.quadro');
-      quadros.forEach((q, index) => {
-        if (y > 270) { doc.addPage(); y = 10; }
-        doc.setFillColor(52, 152, 219);
-        doc.rect(10, y - 5, 190, 8, 'F');
-        doc.setTextColor(255);
-        doc.setFontSize(12);
-        doc.text(`Quadro ${index + 1}`, 12, y);
-        y += 10;
+    const nomeArquivo =
+    `Instalação_${cliente}_${unidade}_${dataFormatada}`
+    .replace(/\s+/g, '_')
+    .replace(/[\\/:*?"<>|]/g, '');
 
-        doc.setTextColor(0);
-        const get = sel => q.querySelector(sel)?.value || '';
+    pdf.save(nomeArquivo + '.pdf');
 
-        doc.setFont(undefined, 'bold');
-        doc.text(`Número do Quadro:`, 10, y);
-        doc.setFont(undefined, 'normal');
-        doc.text(get('.numeroQuadro'), 60, y); y += 8;
+}
 
-        doc.setFont(undefined, 'bold');
-        doc.text(`Nome do Quadro:`, 10, y);
-        doc.setFont(undefined, 'normal');
-        doc.text(get('.nomeQuadro'), 60, y); y += 8;
+</script>
 
-        if (!q.querySelector('.detalhes').classList.contains('hidden')) {
-          doc.text(`Marca: ${get('.marca')}`, 10, y); y += 8;
-          doc.text(`Modelo: ${get('.modelo')}`, 10, y); y += 8;
-          const numPortas = parseInt(get('.numPortas'));
-          doc.text(`Número de Portas: ${numPortas}`, 10, y); y += 8;
-          const portas = q.querySelectorAll('.portas .porta');
-          portas.forEach((p, i) => {
-            const inputs = p.querySelectorAll('input');
-            const textoPorta = `Porta ${i + 1}: IP: ${inputs[0].value}, Equipamento: ${inputs[1].value}, Nome: ${inputs[2].value}`;
-            if (y > 280) { doc.addPage(); y = 10; }
-            doc.text(textoPorta, 10, y); y += 8;
-          });
-        }
-
-        doc.text(`Tipo de Energia: ${get('.energia')}`, 10, y); y += 8;
-        if (get('.energia') === 'nobreak') {
-          doc.text(`Marca Energia: ${get('.marcaEnergia')}`, 10, y); y += 8;
-          doc.text(`Modelo Energia: ${get('.modeloEnergia')}`, 10, y); y += 8;
-          doc.text(`VA: ${get('.vaEnergia')}`, 10, y); y += 8;
-        }
-
-        doc.text(`Tipo de Conexão: ${get('.conexao')}`, 10, y); y += 8;
-        const detalhe = q.querySelector('.conexaoDetalhes');
-        if (!detalhe.classList.contains('hidden')) {
-          const input = detalhe.querySelector('input');
-          const select = detalhe.querySelector('select');
-          if (input) {
-            doc.text(`Detalhe da Conexão: ${input.value}`, 10, y); y += 8;
-          } else if (select) {
-            doc.text(`Detalhe da Conexão: ${select.value}`, 10, y); y += 8;
-          }
-        }
-
-        const observacoes = q.querySelector('.observacoes')?.value.trim();
-        if (observacoes) {
-          if (y > 270) { doc.addPage(); y = 10; }
-          doc.text(`Observações: ${observacoes}`, 10, y);
-          y += 10;
-        }
-
-        y += 5;
-        if (y > 270) { doc.addPage(); y = 10; }
-      });
-
-      doc.save('mapeamento_quadros.pdf');
-    }
-  </script>
 </body>
+
 </html>
