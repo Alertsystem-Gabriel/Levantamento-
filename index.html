@@ -752,7 +752,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Sistema 1</label>
+            <label>Foto Sistema (Tela inicial 1)  </label>
 
             <input type="file"
             accept="image/*"
@@ -764,7 +764,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Sistema 2</label>
+            <label>Foto Sistema (Tela inicial 2)</label>
 
             <input type="file"
             accept="image/*"
@@ -776,7 +776,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Equipamento 1</label>
+            <label>Foto Sistema (Radius config)</label>
 
             <input type="file"
             accept="image/*"
@@ -788,7 +788,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Equipamento 2</label>
+            <label>Foto Sistema (Permit)</label>
 
             <input type="file"
             accept="image/*"
@@ -800,7 +800,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Adicional 1</label>
+            <label>Foto do Veiculo Instalado </label>
 
             <input type="file"
             accept="image/*"
@@ -812,7 +812,7 @@ button:hover{
 
         <div class="upload-box">
 
-            <label>Foto Adicional 2</label>
+            <label>Equipamento instalado </label>
 
             <input type="file"
             accept="image/*"
@@ -822,6 +822,31 @@ button:hover{
 
         </div>
 
+        <div class="upload-box">
+             <label>Foto Adicional 1</label>
+            <input type="file" accept="image/*" onchange="preview(event,'img7')">
+             <div class="preview" id="img7"></div>
+        </div>
+
+        <div class="upload-box">
+            <label>Foto Adicional 2</label>
+            <input type="file" accept="image/*" onchange="preview(event,'img8')">
+            <div class="preview" id="img8"></div>
+        </div>
+
+        <div class="upload-box">
+            <label>Foto Adicional 3</label>
+            <input type="file" accept="image/*" onchange="preview(event,'img9')">
+            <div class="preview" id="img9"></div>
+        </div>
+
+        <div class="upload-box">
+            <label>Foto Adicional 4</label>
+            <input type="file" accept="image/*" onchange="preview(event,'img10')">
+            <div class="preview" id="img10"></div>
+        </div>
+
+ 
     </div>
 
     <!-- LOGO -->
@@ -904,37 +929,57 @@ async function gerarPDF(){
 
     const imagens = [
 
-        {
-            titulo:'Foto Sistema 1',
-            imagem:pegarImagem('img1')
-        },
+    {
+        titulo:'Foto Sistema 1',
+        imagem:pegarImagem('img1')
+    },
 
-        {
-            titulo:'Foto Sistema 2',
-            imagem:pegarImagem('img2')
-        },
+    {
+        titulo:'Foto Sistema 2',
+        imagem:pegarImagem('img2')
+    },
 
-        {
-            titulo:'Foto Equipamento 1',
-            imagem:pegarImagem('img3')
-        },
+    {
+        titulo:'Foto Equipamento 1',
+        imagem:pegarImagem('img3')
+    },
 
-        {
-            titulo:'Foto Equipamento 2',
-            imagem:pegarImagem('img4')
-        },
+    {
+        titulo:'Foto Equipamento 2',
+        imagem:pegarImagem('img4')
+    },
 
-        {
-            titulo:'Foto Adicional 1',
-            imagem:pegarImagem('img5')
-        },
+    {
+        titulo:'Foto Adicional 1',
+        imagem:pegarImagem('img5')
+    },
 
-        {
-            titulo:'Foto Adicional 2',
-            imagem:pegarImagem('img6')
-        }
+    {
+        titulo:'Foto Adicional 2',
+        imagem:pegarImagem('img6')
+    },
 
-    ];
+    {
+        titulo:'Foto Adicional 3',
+        imagem:pegarImagem('img7')
+    },
+
+    {
+        titulo:'Foto Adicional 4',
+        imagem:pegarImagem('img8')
+    },
+
+    {
+        titulo:'Foto Adicional 5',
+        imagem:pegarImagem('img9')
+    },
+
+    {
+        titulo:'Foto Adicional 6',
+        imagem:pegarImagem('img10')
+    }
+
+];
 
     /* ========================================= */
     /* HTML PDF */
