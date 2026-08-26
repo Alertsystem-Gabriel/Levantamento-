@@ -41,10 +41,10 @@ export async function submitToCloud(report: ReportData, pdfBlob: Blob) {
   const path = `${auth.user.id}/${report.id}.pdf`
   const { error: uploadError } = await supabase.storage
     .from('reports')
-    .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: false })
+    .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: true })
   if (uploadError) throw uploadError
 
-  const { data, error } = await supabase.from('reports').insert({
+  const { error } = await supabase.from('reports').insert({
     id: report.id,
     protocol: report.protocol,
     created_by: auth.user.id,
@@ -60,12 +60,12 @@ export async function submitToCloud(report: ReportData, pdfBlob: Blob) {
     pdf_size: pdfBlob.size,
     submitted_at: report.submittedAt,
     metadata: { coreExtensions: report.coreExtensions.length, accessories: report.accessoryPhotos.length }
-  }).select('id').single()
-  if (error) {
+  })
+  if (error && error.code !== '23505') {
     await supabase.storage.from('reports').remove([path])
     throw error
   }
-  return data.id as string
+  return report.id
 }
 
 export async function listCloudReports() {
@@ -95,3 +95,4 @@ export async function createCloudAdmin(name: string, email: string, password: st
   if (error) throw error
   return data.account as AdminAccount
 }
+
