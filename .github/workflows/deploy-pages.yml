@@ -14,6 +14,12 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Estes valores identificam o projeto no navegador e são públicos por definição.
+# A segurança dos dados permanece nas políticas RLS configuradas no Supabase.
+env:
+  VITE_SUPABASE_URL: https://azametabxezpuyxekiqq.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_Dn5f79FkgHdK5io081etsQ_l9xXNJxI
+
 jobs:
   build:
     runs-on: ubuntu-latest
