@@ -53,7 +53,7 @@ export interface StoredReport extends ReportData {
   remoteId?: string
 }
 
-export const CORE_PHOTO_TITLES = ['Network Config', 'Radius Config', 'Permit Config'] as const
+export const CORE_PHOTO_TITLES = ['Instalação do Core', 'Lateral do veículo', 'Veículo completo'] as const
 export const EXTENSION_PHOTO_TITLES = [
   'Core Extension Network Config',
   'Core Extension Radius Config',
