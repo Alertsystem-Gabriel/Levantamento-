@@ -76,6 +76,8 @@ on conflict (id) do update set public = false, file_size_limit = 52428800, allow
 
 create policy "technicians upload own reports" on storage.objects for insert to authenticated
 with check (bucket_id = 'reports' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "technicians read own report files" on storage.objects for select to authenticated
+using (bucket_id = 'reports' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "admins read report files" on storage.objects for select to authenticated
 using (bucket_id = 'reports' and public.is_admin());
 create policy "admins delete report files" on storage.objects for delete to authenticated
