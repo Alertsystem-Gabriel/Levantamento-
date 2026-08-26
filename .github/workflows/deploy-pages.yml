@@ -39,7 +39,7 @@ jobs:
         run: pnpm build
 
       - name: Preparar a página inicial
-        run: mv dist/app.html dist/index.html
+        run: cp dist/app.html dist/index.html
 
       - name: Configurar o GitHub Pages
         uses: actions/configure-pages@v5

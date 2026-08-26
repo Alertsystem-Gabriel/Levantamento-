@@ -15,6 +15,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['a4-logo.png'],
+      workbox: {
+        navigateFallback: 'app.html',
+        cleanupOutdatedCaches: true
+      },
       manifest: {
         name: 'Relatório de Implantação A4',
         short_name: 'Relatório A4',
