@@ -32,8 +32,9 @@ Sem arquivo `.env`, o sistema inicia em modo de demonstração. Os dois perfis a
 1. Crie um projeto no Supabase.
 2. Execute `supabase/migrations/001_initial_schema.sql` no SQL Editor.
 3. Crie usuários em Authentication.
-4. Insira os perfis na tabela `profiles` com função `technician` ou `admin`.
-5. Copie `.env.example` para `.env.local` e preencha URL e chave publicável.
+4. Ative **Anonymous Sign-Ins** em Authentication para permitir o formulário livre aos técnicos.
+5. Altere o perfil do usuário administrativo na tabela `profiles` para a função `admin`.
+6. Copie `.env.example` para `.env.local` e preencha URL e chave publicável.
 
 Nunca coloque a chave `service_role` no frontend ou no GitHub.
 

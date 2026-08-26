@@ -9,6 +9,21 @@ create table public.profiles (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_auth_user()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into public.profiles(id, full_name, role)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', 'Acesso livre'), 'technician')
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger create_profile_after_signup
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
+
 create table public.reports (
   id uuid primary key,
   protocol text not null unique,

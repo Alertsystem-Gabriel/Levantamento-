@@ -4,7 +4,7 @@ import logoUrl from '../images.png'
 import { db, listReports, removeReport, saveDraft } from './db'
 import { PhotoField } from './components/PhotoField'
 import { SignaturePad } from './components/SignaturePad'
-import { cloudEnabled, downloadCloudPdf, listCloudReports, signIn, signOut, submitToCloud } from './supabase'
+import { cloudEnabled, downloadCloudPdf, listCloudReports, signIn, signOut, startTechnicianSession, submitToCloud } from './supabase'
 import { createEmptyReport, createId, emptyPhoto, EXTENSION_PHOTO_TITLES, type CoreExtension, type PhotoItem, type ReportData, type Role, type StoredReport } from './types'
 
 interface Session { role: Role; name: string; demo: boolean }
@@ -24,6 +24,7 @@ function Header({ session, onLogout }: { session: Session; onLogout: () => void 
 }
 
 function Login({ onLogin }: { onLogin: (session: Session) => void }) {
+  const [adminMode, setAdminMode] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -38,7 +39,16 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
     finally { setLoading(false) }
   }
 
-  return <main className="login-page"><section className="login-hero"><div className="hero-overlay"><img src={logoUrl} alt="A4 Solutions" /><span className="eyebrow light">Implantação em campo</span><h1>Relatório de Operação</h1><p>Registre instalações, evidências e assinaturas pelo celular. Consulte tudo em um único painel.</p><div className="hero-points"><span><CheckCircle2 /> Funciona no celular</span><span><CheckCircle2 /> Preparado para uso offline</span><span><ShieldCheck /> Acesso protegido por função</span></div></div></section><section className="login-panel"><div className="login-card"><span className="eyebrow">Acesso seguro</span><h2>Entrar no sistema</h2><p>Use as credenciais fornecidas pela A4 Solutions.</p>{cloudEnabled ? <form onSubmit={authenticate}><label className="field"><span>E-mail</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}<ChevronRight size={19} /></button></form> : <div className="demo-access"><div className="alert"><WifiOff size={18} /><span>Supabase ainda não conectado. Escolha um perfil para avaliar o sistema localmente.</span></div><button className="primary-button" onClick={() => onLogin({ role: 'technician', name: 'Técnico Demonstração', demo: true })}>Entrar como técnico<ChevronRight size={19} /></button><button className="secondary-button" onClick={() => onLogin({ role: 'admin', name: 'Administrador', demo: true })}>Entrar como administrador</button></div>}<small className="login-footer">A4 Solutions • Uso interno</small></div></section></main>
+  const enterTechnicianArea = async () => {
+    setLoading(true); setError('')
+    try {
+      await startTechnicianSession()
+      onLogin({ role: 'technician', name: 'Acesso livre', demo: !cloudEnabled })
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível abrir o formulário.') }
+    finally { setLoading(false) }
+  }
+
+  return <main className="login-page"><section className="login-hero"><div className="hero-overlay"><img src={logoUrl} alt="A4 Solutions" /><span className="eyebrow light">Implantação em campo</span><h1>Relatório de Operação</h1><p>Registre instalações, evidências e assinaturas pelo celular. Consulte tudo em um único painel.</p><div className="hero-points"><span><CheckCircle2 /> Funciona no celular</span><span><CheckCircle2 /> Preparado para uso offline</span><span><ShieldCheck /> Administração protegida</span></div></div></section><section className="login-panel"><div className="login-card"><span className="eyebrow">A4 Solutions</span>{!adminMode ? <div className="demo-access"><h2>Acessar o sistema</h2><p className="access-description">A criação de relatórios é livre. O painel de consulta é exclusivo para administradores.</p>{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading} onClick={() => void enterTechnicianArea()}>{loading ? 'Abrindo...' : 'Criar relatório'}<ChevronRight size={19} /></button><button className="secondary-button" onClick={() => { setAdminMode(true); setError('') }}><ShieldCheck size={18} />Entrar como administrador</button></div> : <div className="admin-login"><button className="back-link" type="button" onClick={() => { setAdminMode(false); setError('') }}><ArrowLeft size={17} />Voltar</button><h2>Acesso administrativo</h2><p className="access-description">Informe o e-mail e a senha do administrador.</p><form onSubmit={authenticate}><label className="field"><span>E-mail</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>{!cloudEnabled && <div className="alert"><WifiOff size={18} /><span>O acesso será ativado quando conectarmos o Supabase.</span></div>}{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}<ChevronRight size={19} /></button></form></div>}<small className="login-footer">A4 Solutions • Uso interno</small></div></section></main>
 }
 
 function ModeSelector({ value, onChange }: { value: ReportData['activityMode']; onChange: (value: ReportData['activityMode']) => void }) {
@@ -46,7 +56,8 @@ function ModeSelector({ value, onChange }: { value: ReportData['activityMode']; 
 }
 
 function TechnicianForm({ session }: { session: Session }) {
-  const [report, setReport] = useState<ReportData>(() => createEmptyReport(session.name))
+  const technicianName = session.name === 'Acesso livre' ? '' : session.name
+  const [report, setReport] = useState<ReportData>(() => createEmptyReport(technicianName))
   const [submitted, setSubmitted] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -92,7 +103,7 @@ function TechnicianForm({ session }: { session: Session }) {
     finally { setSaving(false) }
   }
 
-  if (submitted) return <main className="success-page"><div className="success-card"><div className="success-icon"><CheckCircle2 size={45} /></div><span className="eyebrow">Envio concluído</span><h1>Relatório registrado</h1><p>O relatório foi salvo com sucesso. Guarde o protocolo para referência.</p><strong className="protocol">{submitted}</strong><button className="primary-button" onClick={() => { setReport(createEmptyReport(session.name)); setSubmitted(null) }}><FilePlus2 size={19} />Criar novo relatório</button></div></main>
+  if (submitted) return <main className="success-page"><div className="success-card"><div className="success-icon"><CheckCircle2 size={45} /></div><span className="eyebrow">Envio concluído</span><h1>Relatório registrado</h1><p>O relatório foi salvo com sucesso. Guarde o protocolo para referência.</p><strong className="protocol">{submitted}</strong><button className="primary-button" onClick={() => { setReport(createEmptyReport(technicianName)); setSubmitted(null) }}><FilePlus2 size={19} />Criar novo relatório</button></div></main>
 
   return <main className="workspace"><div className="page-intro"><div><span className="eyebrow">Nova implantação</span><h1>Relatório de campo</h1><p>Preencha os dados, registre as evidências e colete as assinaturas.</p></div><div className="draft-status"><CheckCircle2 size={17} />Rascunho salvo neste aparelho</div></div>{error && <div className="alert error sticky-alert"><AlertCircle size={19} />{error}</div>}
     <section className="form-section"><div className="section-heading"><div><span className="step">01</span><h2>Dados da atividade</h2></div><p>Identificação básica da implantação.</p></div><div className="form-grid"><label className="field"><span>Cliente *</span><input value={report.client} onChange={(e) => update('client', e.target.value)} /></label><label className="field"><span>Unidade</span><input value={report.unit} onChange={(e) => update('unit', e.target.value)} /></label><label className="field"><span>Técnico *</span><input value={report.technician} onChange={(e) => update('technician', e.target.value)} /></label><label className="field"><span>Data *</span><input type="date" value={report.date} onChange={(e) => update('date', e.target.value)} /></label><label className="field wide"><span>Equipamento, veículo ou local</span><input value={report.vehicle} onChange={(e) => update('vehicle', e.target.value)} placeholder="Ex.: Veículo 42 / Placa ABC1D23" /></label></div></section>

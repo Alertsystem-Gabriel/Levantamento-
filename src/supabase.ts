@@ -7,6 +7,14 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 export const cloudEnabled = Boolean(url && key)
 export const supabase = cloudEnabled ? createClient(url!, key!) : null
 
+export async function startTechnicianSession() {
+  if (!supabase) return
+  const { data } = await supabase.auth.getSession()
+  if (data.session?.user?.is_anonymous) return
+  const { error } = await supabase.auth.signInAnonymously()
+  if (error) throw error
+}
+
 export async function signIn(email: string, password: string) {
   if (!supabase) throw new Error('Supabase ainda não configurado.')
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
