@@ -83,6 +83,25 @@ function TechnicianForm({ session }: { session: Session }) {
     return () => clearTimeout(timer)
   }, [report])
 
+  useEffect(() => {
+    if (!cloudEnabled) return
+    let cancelled = false
+    const retryPendingUploads = async () => {
+      const pending = (await listReports()).filter((item) => item.status === 'sync_pending' && item.pdfBlob)
+      for (const item of pending) {
+        if (cancelled || !item.pdfBlob) return
+        try {
+          const remoteId = (await submitToCloud(item, item.pdfBlob)) ?? undefined
+          await saveDraft({ ...item, status: 'submitted', remoteId })
+        } catch {
+          // Mantém o PDF neste aparelho para tentar novamente no próximo acesso.
+        }
+      }
+    }
+    void retryPendingUploads()
+    return () => { cancelled = true }
+  }, [])
+
   const update = <K extends keyof ReportData>(key: K, value: ReportData[K]) => setReport((current) => ({ ...current, [key]: value, updatedAt: new Date().toISOString() }))
   const updatePhoto = (key: 'corePhotos' | 'accessoryPhotos' | 'additionalPhotos', index: number, photo: PhotoItem) => update(key, report[key].map((item, itemIndex) => itemIndex === index ? photo : item))
   const addExtension = () => update('coreExtensions', [...report.coreExtensions, { id: createId(), name: `Core Extension ${report.coreExtensions.length + 1}`, photos: EXTENSION_PHOTO_TITLES.map(emptyPhoto) }])
@@ -122,12 +141,16 @@ function TechnicianForm({ session }: { session: Session }) {
     try {
       const blob = await buildPdf(finalReport)
       let remoteId: string | undefined
-      let status: ReportData['status'] = 'submitted'
       if (cloudEnabled) {
-        try { remoteId = (await submitToCloud(finalReport, blob)) ?? undefined }
-        catch { status = 'sync_pending' }
+        try {
+          remoteId = (await submitToCloud(finalReport, blob)) ?? undefined
+        } catch (cause) {
+          await saveDraft({ ...finalReport, status: 'sync_pending', pdfBlob: blob, pdfSize: blob.size })
+          const reason = cause instanceof Error ? cause.message : 'falha de conexão'
+          throw new Error(`O PDF ficou salvo neste aparelho, mas ainda não chegou ao painel (${reason}). Abra o sistema novamente para tentar o envio automático.`)
+        }
       }
-      await saveDraft({ ...finalReport, status, pdfBlob: blob, pdfSize: blob.size, remoteId })
+      await saveDraft({ ...finalReport, status: 'submitted', pdfBlob: blob, pdfSize: blob.size, remoteId })
       setSubmitted(finalReport.protocol)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível gerar o relatório.') }
     finally { setSaving(false) }
@@ -229,3 +252,4 @@ export function App() {
   if (!session) return <Login onLogin={login} />
   return <><Header session={session} onLogout={() => void logout()} />{session.role === 'admin' ? <AdminDashboard /> : <TechnicianForm session={session} />}</>
 }
+
