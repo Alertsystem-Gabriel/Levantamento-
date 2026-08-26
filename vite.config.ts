@@ -5,7 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base: '/Levantamento-/',
   build: {
-    chunkSizeWarningLimit: 700
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      input: 'app.html'
+    }
   },
   plugins: [
     react(),

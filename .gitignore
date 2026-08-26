@@ -4,3 +4,5 @@ dist
 .env.local
 *.log
 .DS_Store
+.pages-artifact.zip
+.pages-output
