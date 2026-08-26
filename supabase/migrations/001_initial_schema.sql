@@ -56,12 +56,16 @@ create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public
 as $$ select exists(select 1 from public.profiles where id = auth.uid() and role = 'admin' and active) $$;
 
+create or replace function public.is_active_technician()
+returns boolean language sql stable security definer set search_path = public
+as $$ select exists(select 1 from public.profiles where id = auth.uid() and role = 'technician' and active) $$;
+
 create policy "users read own profile" on public.profiles for select to authenticated using (id = auth.uid() or public.is_admin());
 create policy "admins manage profiles" on public.profiles for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Técnicos apenas enviam. Somente administradores consultam relatórios finalizados.
 create policy "technicians insert reports" on public.reports for insert to authenticated
-with check (created_by = auth.uid() and exists(select 1 from public.profiles where id = auth.uid() and role = 'technician' and active));
+with check (created_by = auth.uid() and public.is_active_technician());
 create policy "admins read reports" on public.reports for select to authenticated using (public.is_admin());
 create policy "admins update reports" on public.reports for update to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "admins delete reports" on public.reports for delete to authenticated using (public.is_admin());
@@ -78,9 +82,11 @@ create policy "admins delete report files" on storage.objects for delete to auth
 using (bucket_id = 'reports' and public.is_admin());
 
 grant usage on schema public to authenticated;
+grant execute on function public.is_active_technician() to authenticated;
 grant select on public.profiles to authenticated;
 grant insert, select, update, delete on public.reports to authenticated;
 
 -- Execute após criar o primeiro usuário, substituindo os valores:
 -- insert into public.profiles(id, full_name, role)
 -- values ('UUID_DO_USUARIO', 'Administrador A4', 'admin');
+
