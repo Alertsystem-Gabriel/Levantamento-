@@ -80,6 +80,8 @@ button:disabled { cursor: not-allowed; opacity: .62; }
 .subsection-title h3 { margin:4px 0 0; }
 .subsection-title>span { font-size:12px; font-weight:800; color:var(--purple); background:#eee9f7; padding:6px 9px; border-radius:8px; }
 .photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.photo-group-title { margin:22px 0 10px; color:#3f3353; font-size:15px; }
+.photo-group-title.compact { margin-top:4px; }
 .photo-card { min-width:0; border:1px solid var(--line); border-radius:14px; padding:12px; background:#faf9fc; }
 .photo-card-title { height:38px; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; font-size:12px; }
 .photo-card-title strong { line-height:1.35; }
