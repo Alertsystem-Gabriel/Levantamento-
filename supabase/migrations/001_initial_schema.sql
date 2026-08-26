@@ -20,6 +20,7 @@ begin
 end;
 $$;
 
+drop trigger if exists create_profile_after_signup on auth.users;
 create trigger create_profile_after_signup
 after insert on auth.users
 for each row execute function public.handle_new_auth_user();
@@ -75,6 +76,10 @@ create policy "admins read report files" on storage.objects for select to authen
 using (bucket_id = 'reports' and public.is_admin());
 create policy "admins delete report files" on storage.objects for delete to authenticated
 using (bucket_id = 'reports' and public.is_admin());
+
+grant usage on schema public to authenticated;
+grant select on public.profiles to authenticated;
+grant insert, select, update, delete on public.reports to authenticated;
 
 -- Execute após criar o primeiro usuário, substituindo os valores:
 -- insert into public.profiles(id, full_name, role)
