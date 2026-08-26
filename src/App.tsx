@@ -87,7 +87,7 @@ function TechnicianForm({ session }: { session: Session }) {
     if (!cloudEnabled) return
     let cancelled = false
     const retryPendingUploads = async () => {
-      const pending = (await listReports()).filter((item) => item.status === 'sync_pending' && item.pdfBlob)
+      const pending = (await listReports()).filter((item) => item.status !== 'draft' && item.pdfBlob && !item.remoteId)
       for (const item of pending) {
         if (cancelled || !item.pdfBlob) return
         try {
