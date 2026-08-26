@@ -1,10 +1,12 @@
-import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Cloud, Download, FilePlus2, FileText, LogOut, Plus, Search, ShieldCheck, Trash2, WifiOff } from 'lucide-react'
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Cloud, Download, FilePlus2, FileText, LogOut, Plus, Search, ShieldCheck, Trash2, UserPlus, Users, WifiOff } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import logoUrl from '../images.png'
 import { db, listReports, removeReport, saveDraft } from './db'
 import { PhotoField } from './components/PhotoField'
 import { SignaturePad } from './components/SignaturePad'
 import { cloudEnabled, downloadCloudPdf, listCloudReports, signIn, signOut, startTechnicianSession, submitToCloud } from './supabase'
+import { authenticateLocalAdmin, createLocalAdmin, hasLocalAdmins, listLocalAdmins, type AdminAccount } from './adminAuth'
+import { createCloudAdmin, listCloudAdmins } from './supabase'
 import { createEmptyReport, createId, emptyPhoto, EXTENSION_PHOTO_TITLES, type CoreExtension, type PhotoItem, type ReportData, type Role, type StoredReport } from './types'
 
 interface Session { role: Role; name: string; demo: boolean }
@@ -33,8 +35,19 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
   const authenticate = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError('')
     try {
-      const result = await signIn(email, password)
-      onLogin({ role: result.role, name: result.name, demo: false })
+      if (!cloudEnabled) {
+        if (!hasLocalAdmins()) {
+          await createLocalAdmin('Gabriel Alcantara', email, password)
+          onLogin({ role: 'admin', name: 'Gabriel Alcantara', demo: true })
+          return
+        }
+        const name = await authenticateLocalAdmin(email, password)
+        onLogin({ role: 'admin', name, demo: true })
+      } else {
+        const result = await signIn(email, password)
+        if (result.role !== 'admin') { await signOut(); throw new Error('Este usuário não possui acesso administrativo.') }
+        onLogin({ role: 'admin', name: result.name, demo: false })
+      }
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível entrar.') }
     finally { setLoading(false) }
   }
@@ -48,7 +61,8 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
     finally { setLoading(false) }
   }
 
-  return <main className="login-page"><section className="login-hero"><div className="hero-overlay"><img src={logoUrl} alt="A4 Solutions" /><span className="eyebrow light">Implantação em campo</span><h1>Relatório de Operação</h1><p>Registre instalações, evidências e assinaturas pelo celular. Consulte tudo em um único painel.</p><div className="hero-points"><span><CheckCircle2 /> Funciona no celular</span><span><CheckCircle2 /> Preparado para uso offline</span><span><ShieldCheck /> Administração protegida</span></div></div></section><section className="login-panel"><div className="login-card"><span className="eyebrow">A4 Solutions</span>{!adminMode ? <div className="demo-access"><h2>Acessar o sistema</h2><p className="access-description">A criação de relatórios é livre. O painel de consulta é exclusivo para administradores.</p>{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading} onClick={() => void enterTechnicianArea()}>{loading ? 'Abrindo...' : 'Criar relatório'}<ChevronRight size={19} /></button><button className="secondary-button" onClick={() => { setAdminMode(true); setError('') }}><ShieldCheck size={18} />Entrar como administrador</button></div> : <div className="admin-login"><button className="back-link" type="button" onClick={() => { setAdminMode(false); setError('') }}><ArrowLeft size={17} />Voltar</button><h2>Acesso administrativo</h2><p className="access-description">Informe o e-mail e a senha do administrador.</p><form onSubmit={authenticate}><label className="field"><span>E-mail</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>{!cloudEnabled && <div className="alert"><WifiOff size={18} /><span>O acesso será ativado quando conectarmos o Supabase.</span></div>}{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}<ChevronRight size={19} /></button></form></div>}<small className="login-footer">A4 Solutions • Uso interno</small></div></section></main>
+  const firstAdminSetup = !cloudEnabled && !hasLocalAdmins()
+  return <main className="login-page"><section className="login-hero"><div className="hero-overlay"><img src={logoUrl} alt="A4 Solutions" /><span className="eyebrow light">Implantação em campo</span><h1>Relatório de Operação</h1><p>Registre instalações, evidências e assinaturas pelo celular. Consulte tudo em um único painel.</p><div className="hero-points"><span><CheckCircle2 /> Funciona no celular</span><span><CheckCircle2 /> Preparado para uso offline</span><span><ShieldCheck /> Administração protegida</span></div></div></section><section className="login-panel"><div className="login-card"><span className="eyebrow">A4 Solutions</span>{!adminMode ? <div className="demo-access"><h2>Acessar o sistema</h2><p className="access-description">A criação de relatórios é livre. O painel de consulta é exclusivo para administradores.</p>{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading} onClick={() => void enterTechnicianArea()}>{loading ? 'Abrindo...' : 'Criar relatório'}<ChevronRight size={19} /></button><button className="secondary-button" onClick={() => { setAdminMode(true); setError('') }}><ShieldCheck size={18} />Entrar como administrador</button></div> : <div className="admin-login"><button className="back-link" type="button" onClick={() => { setAdminMode(false); setError('') }}><ArrowLeft size={17} />Voltar</button><h2>{firstAdminSetup ? 'Criar primeiro administrador' : 'Acesso administrativo'}</h2><p className="access-description">{firstAdminSetup ? 'Informe seu e-mail e crie uma senha para este navegador.' : 'Informe o e-mail e a senha do administrador.'}</p><form onSubmit={authenticate}><label className="field"><span>E-mail</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label className="field"><span>Senha</span><input type="password" minLength={8} autoComplete={firstAdminSetup ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} required /></label>{!cloudEnabled && <div className="alert"><WifiOff size={18} /><span>{firstAdminSetup ? 'Este primeiro acesso ficará protegido somente neste navegador até conectarmos o banco.' : 'Acesso provisório ativo até conectarmos o banco de dados.'}</span></div>}{error && <div className="alert error"><AlertCircle size={18} />{error}</div>}<button className="primary-button" disabled={loading}>{loading ? 'Entrando...' : firstAdminSetup ? 'Criar acesso' : 'Entrar'}<ChevronRight size={19} /></button></form></div>}<small className="login-footer">A4 Solutions • Uso interno</small></div></section></main>
 }
 
 function ModeSelector({ value, onChange }: { value: ReportData['activityMode']; onChange: (value: ReportData['activityMode']) => void }) {
@@ -60,6 +74,7 @@ function TechnicianForm({ session }: { session: Session }) {
   const [report, setReport] = useState<ReportData>(() => createEmptyReport(technicianName))
   const [submitted, setSubmitted] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -79,6 +94,25 @@ function TechnicianForm({ session }: { session: Session }) {
     return missing?.[1] ?? ''
   }
 
+  const buildPdf = async (data: ReportData) => {
+    const [{ pdf }, { ReportPdf }] = await Promise.all([import('@react-pdf/renderer'), import('./pdf/ReportPdf')])
+    return pdf(<ReportPdf report={data} logoUrl={logoUrl} />).toBlob()
+  }
+
+  const downloadOnly = async () => {
+    const validation = validate()
+    if (validation) { setError(validation); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    setDownloading(true); setError('')
+    try {
+      const generatedAt = new Date().toISOString()
+      const printableReport: ReportData = { ...report, updatedAt: generatedAt, submittedAt: generatedAt }
+      const blob = await buildPdf(printableReport)
+      const clientName = report.client.trim().replace(/[^a-zA-Z0-9À-ÿ_-]+/g, '_') || 'cliente'
+      downloadBlob(blob, `${report.protocol}_${clientName}.pdf`)
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível baixar o PDF.') }
+    finally { setDownloading(false) }
+  }
+
   const submit = async () => {
     const validation = validate()
     if (validation) { setError(validation); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
@@ -86,11 +120,7 @@ function TechnicianForm({ session }: { session: Session }) {
     const submittedAt = new Date().toISOString()
     const finalReport: ReportData = { ...report, status: 'submitted', submittedAt, updatedAt: submittedAt }
     try {
-      const [{ pdf }, { ReportPdf }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('./pdf/ReportPdf')
-      ])
-      const blob = await pdf(<ReportPdf report={finalReport} logoUrl={logoUrl} />).toBlob()
+      const blob = await buildPdf(finalReport)
       let remoteId: string | undefined
       let status: ReportData['status'] = 'submitted'
       if (cloudEnabled) {
@@ -132,8 +162,40 @@ function TechnicianForm({ session }: { session: Session }) {
     <section className="form-section"><div className="section-heading"><div><span className="step">04</span><h2>Fotos adicionais</h2></div><p>Inclua quantas evidências extras forem necessárias.</p></div><div className="photo-grid">{report.additionalPhotos.map((photo, index) => <PhotoField key={photo.id} photo={photo} editableTitle removable onChange={(item) => updatePhoto('additionalPhotos', index, item)} onRemove={() => update('additionalPhotos', report.additionalPhotos.filter((_, itemIndex) => itemIndex !== index))} />)}</div><button type="button" className="add-button" onClick={() => update('additionalPhotos', [...report.additionalPhotos, emptyPhoto(`Foto adicional ${report.additionalPhotos.length + 1}`)])}><Plus size={19} />Adicionar foto</button></section>
 
     <section className="form-section"><div className="section-heading"><div><span className="step">05</span><h2>Validação</h2></div><p>As duas assinaturas serão incluídas no PDF.</p></div><div className="signature-grid"><SignaturePad label="Técnico responsável" value={report.technicianSignature} onChange={(value) => update('technicianSignature', value)} /><SignaturePad label="Cliente / responsável" value={report.clientSignature} onChange={(value) => update('clientSignature', value)} /></div></section>
-    <div className="submit-bar"><div><strong>{report.protocol}</strong><span>Revise os dados antes de finalizar.</span></div><button className="primary-button" disabled={saving} onClick={() => void submit()}>{saving ? 'Gerando relatório...' : 'Finalizar e enviar'}<ChevronRight size={19} /></button></div>
+    <div className="submit-bar"><div><strong>{report.protocol}</strong><span>Revise os dados antes de finalizar.</span></div><div className="submit-actions"><button className="secondary-button" disabled={saving || downloading} onClick={() => void downloadOnly()}><Download size={18} />{downloading ? 'Gerando PDF...' : 'Baixar PDF'}</button><button className="primary-button" disabled={saving || downloading} onClick={() => void submit()}>{saving ? 'Gerando relatório...' : 'Finalizar e enviar'}<ChevronRight size={19} /></button></div></div>
   </main>
+}
+
+function AdminUsers() {
+  const [accounts, setAccounts] = useState<AdminAccount[]>([])
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [savingUser, setSavingUser] = useState(false)
+  const [message, setMessage] = useState('')
+  const [userError, setUserError] = useState('')
+
+  const refresh = async () => setAccounts(cloudEnabled ? await listCloudAdmins() : listLocalAdmins())
+  useEffect(() => { void refresh().catch((cause) => setUserError(cause instanceof Error ? cause.message : 'Não foi possível listar os administradores.')) }, [])
+
+  const createUser = async (event: React.FormEvent) => {
+    event.preventDefault(); setSavingUser(true); setUserError(''); setMessage('')
+    try {
+      if (password.length < 8) throw new Error('A senha precisa ter pelo menos 8 caracteres.')
+      if (cloudEnabled) await createCloudAdmin(name, email, password)
+      else await createLocalAdmin(name, email, password)
+      setName(''); setEmail(''); setPassword(''); setMessage('Novo administrador criado com sucesso.')
+      await refresh()
+    } catch (cause) { setUserError(cause instanceof Error ? cause.message : 'Não foi possível criar o administrador.') }
+    finally { setSavingUser(false) }
+  }
+
+  return <section className="admin-card admin-users"><div className="admin-toolbar"><div><h2>Usuários administradores</h2><p>Todo administrador pode criar um novo acesso.</p></div><span className="admin-count"><Users size={17} />{accounts.length} usuário(s)</span></div>
+    {!cloudEnabled && <div className="alert"><WifiOff size={18} /><span>Enquanto o banco não estiver conectado, os novos usuários ficam salvos somente neste navegador.</span></div>}
+    <div className="admin-users-layout"><form className="admin-user-form" onSubmit={createUser}><h3><UserPlus size={19} />Criar novo login</h3><label className="field"><span>Nome</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label><label className="field"><span>E-mail</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label className="field"><span>Senha inicial</span><input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>{userError && <div className="alert error"><AlertCircle size={18} />{userError}</div>}{message && <div className="alert success"><CheckCircle2 size={18} />{message}</div>}<button className="primary-button" disabled={savingUser}><UserPlus size={18} />{savingUser ? 'Criando...' : 'Criar administrador'}</button></form>
+      <div className="admin-user-list"><h3>Administradores ativos</h3>{accounts.map((account) => <article key={account.id}><div className="admin-avatar">{account.name.slice(0, 1).toUpperCase()}</div><div><strong>{account.name}</strong><span>{account.email}</span></div>{account.temporary && <small>Provisório</small>}</article>)}</div>
+    </div>
+  </section>
 }
 
 function AdminDashboard() {
@@ -156,7 +218,7 @@ function AdminDashboard() {
   const downloadLocal = (report: StoredReport) => report.pdfBlob && downloadBlob(report.pdfBlob, `${report.protocol}_${report.client.replace(/\s+/g, '_')}.pdf`)
   const downloadRemote = async (report: CloudReport) => downloadBlob(await downloadCloudPdf(report.pdf_path), `${report.protocol}_${report.client.replace(/\s+/g, '_')}.pdf`)
 
-  return <main className="admin-workspace"><div className="page-intro"><div><span className="eyebrow">Gestão documental</span><h1>Relatórios de implantação</h1><p>Consulte e extraia os documentos enviados pela equipe de campo.</p></div></div><section className="metrics"><article><span>Relatórios disponíveis</span><strong>{cloudEnabled ? cloudReports.length : reports.length}</strong><FileText /></article><article><span>Armazenamento local</span><strong>{(used / 1024 / 1024).toFixed(1)} MB</strong><Cloud /></article><article><span>Fonte de dados</span><strong>{cloudEnabled ? 'Supabase' : 'Demonstração'}</strong>{cloudEnabled ? <ShieldCheck /> : <WifiOff />}</article></section><section className="admin-card"><div className="admin-toolbar"><div><h2>Base de relatórios</h2><p>{loading ? 'Atualizando...' : `${cloudEnabled ? cloudReports.length : filtered.length} documento(s) encontrado(s)`}</p></div><label className="search-box"><Search size={19} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente, técnico ou protocolo" /></label></div><div className="table-wrap"><table><thead><tr><th>Protocolo</th><th>Cliente / Unidade</th><th>Técnico</th><th>Data</th><th>Tipo</th><th>Documento</th></tr></thead><tbody>{cloudEnabled ? cloudReports.filter((item) => `${item.protocol} ${item.client} ${item.technician_name}`.toLowerCase().includes(query.toLowerCase())).map((item) => <tr key={item.id}><td><strong>{item.protocol}</strong></td><td>{item.client}<small>{item.unit}</small></td><td>{item.technician_name}</td><td>{item.report_date.split('-').reverse().join('/')}</td><td><span className="tag">{item.installation_mode}</span></td><td><button className="download-button" onClick={() => void downloadRemote(item)} disabled={Boolean(item.pdf_removed_at)}><Download size={17} />{item.pdf_removed_at ? 'Removido' : 'Baixar'}</button></td></tr>) : filtered.map((item) => <tr key={item.id}><td><strong>{item.protocol}</strong></td><td>{item.client}<small>{item.unit}</small></td><td>{item.technician}</td><td>{item.date.split('-').reverse().join('/')}</td><td><span className="tag">{item.activityMode}</span></td><td><div className="row-actions"><button className="download-button" onClick={() => downloadLocal(item)} disabled={!item.pdfBlob}><Download size={17} />Baixar</button><button className="icon-button danger" onClick={() => void removeReport(item.id).then(refresh)} aria-label="Excluir relatório local"><Trash2 size={17} /></button></div></td></tr>)}</tbody></table>{!loading && (cloudEnabled ? cloudReports.length === 0 : filtered.length === 0) && <div className="empty-state"><FileText size={34} /><h3>Nenhum relatório encontrado</h3><p>Os relatórios enviados pelos técnicos aparecerão aqui.</p></div>}</div></section></main>
+  return <main className="admin-workspace"><div className="page-intro"><div><span className="eyebrow">Gestão documental</span><h1>Relatórios de implantação</h1><p>Consulte e extraia os documentos enviados pela equipe de campo.</p></div></div><section className="metrics"><article><span>Relatórios disponíveis</span><strong>{cloudEnabled ? cloudReports.length : reports.length}</strong><FileText /></article><article><span>Armazenamento local</span><strong>{(used / 1024 / 1024).toFixed(1)} MB</strong><Cloud /></article><article><span>Fonte de dados</span><strong>{cloudEnabled ? 'Supabase' : 'Demonstração'}</strong>{cloudEnabled ? <ShieldCheck /> : <WifiOff />}</article></section><AdminUsers /><section className="admin-card"><div className="admin-toolbar"><div><h2>Base de relatórios</h2><p>{loading ? 'Atualizando...' : `${cloudEnabled ? cloudReports.length : filtered.length} documento(s) encontrado(s)`}</p></div><label className="search-box"><Search size={19} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente, técnico ou protocolo" /></label></div><div className="table-wrap"><table><thead><tr><th>Protocolo</th><th>Cliente / Unidade</th><th>Técnico</th><th>Data</th><th>Tipo</th><th>Documento</th></tr></thead><tbody>{cloudEnabled ? cloudReports.filter((item) => `${item.protocol} ${item.client} ${item.technician_name}`.toLowerCase().includes(query.toLowerCase())).map((item) => <tr key={item.id}><td><strong>{item.protocol}</strong></td><td>{item.client}<small>{item.unit}</small></td><td>{item.technician_name}</td><td>{item.report_date.split('-').reverse().join('/')}</td><td><span className="tag">{item.installation_mode}</span></td><td><button className="download-button" onClick={() => void downloadRemote(item)} disabled={Boolean(item.pdf_removed_at)}><Download size={17} />{item.pdf_removed_at ? 'Removido' : 'Baixar'}</button></td></tr>) : filtered.map((item) => <tr key={item.id}><td><strong>{item.protocol}</strong></td><td>{item.client}<small>{item.unit}</small></td><td>{item.technician}</td><td>{item.date.split('-').reverse().join('/')}</td><td><span className="tag">{item.activityMode}</span></td><td><div className="row-actions"><button className="download-button" onClick={() => downloadLocal(item)} disabled={!item.pdfBlob}><Download size={17} />Baixar</button><button className="icon-button danger" onClick={() => void removeReport(item.id).then(refresh)} aria-label="Excluir relatório local"><Trash2 size={17} /></button></div></td></tr>)}</tbody></table>{!loading && (cloudEnabled ? cloudReports.length === 0 : filtered.length === 0) && <div className="empty-state"><FileText size={34} /><h3>Nenhum relatório encontrado</h3><p>Os relatórios enviados pelos técnicos aparecerão aqui.</p></div>}</div></section></main>
 }
 
 export function App() {

@@ -13,6 +13,8 @@ Aplicação PWA para criação de relatórios em campo e consulta administrativa
 - PDF A4 com texto selecionável.
 - Rascunho offline no IndexedDB.
 - Painel administrativo com filtros e download.
+- Criação de novos administradores pelo próprio painel.
+- Download local do PDF sem envio obrigatório.
 - Supabase preparado para Auth, PostgreSQL, Storage e RLS.
 - Política de retenção preparada para 900 MB → 750 MB.
 
@@ -25,7 +27,9 @@ npm install
 npm run dev
 ```
 
-Sem arquivo `.env`, o sistema inicia em modo de demonstração. Os dois perfis aparecem na tela de entrada e os dados ficam somente no navegador.
+Sem arquivo `.env`, o sistema inicia em modo de demonstração. O formulário técnico permanece livre e os dados ficam somente no navegador.
+
+No primeiro acesso administrativo em modo local, o sistema solicita a criação do e-mail e da senha. Esse acesso fica protegido somente no navegador utilizado e deve ser substituído assim que o Supabase estiver conectado.
 
 ## Conectar ao Supabase
 
@@ -35,6 +39,7 @@ Sem arquivo `.env`, o sistema inicia em modo de demonstração. Os dois perfis a
 4. Ative **Anonymous Sign-Ins** em Authentication para permitir o formulário livre aos técnicos.
 5. Altere o perfil do usuário administrativo na tabela `profiles` para a função `admin`.
 6. Copie `.env.example` para `.env.local` e preencha URL e chave publicável.
+7. Publique a função `manage-admins` para permitir que administradores criem outros acessos.
 
 Nunca coloque a chave `service_role` no frontend ou no GitHub.
 

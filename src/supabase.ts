@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { ReportData, Role } from './types'
+import type { AdminAccount } from './adminAuth'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
@@ -79,4 +80,18 @@ export async function downloadCloudPdf(path: string) {
   const { data, error } = await supabase.storage.from('reports').download(path)
   if (error) throw error
   return data
+}
+
+export async function listCloudAdmins() {
+  if (!supabase) return []
+  const { data, error } = await supabase.functions.invoke('manage-admins', { body: { action: 'list' } })
+  if (error) throw error
+  return data.accounts as AdminAccount[]
+}
+
+export async function createCloudAdmin(name: string, email: string, password: string) {
+  if (!supabase) throw new Error('Supabase ainda não configurado.')
+  const { data, error } = await supabase.functions.invoke('manage-admins', { body: { action: 'create', name, email, password } })
+  if (error) throw error
+  return data.account as AdminAccount
 }
